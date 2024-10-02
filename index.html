@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translator Bahasa Suki</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">Translator Bahasa Suki</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold">Pengaturan</h2>
+                    <button id="swapBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        🔄 Tukar Arah
+                    </button>
+                </div>
+                <div class="flex space-x-4" id="optionsContainer">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="domgeCheck" class="form-checkbox h-5 w-5 text-indigo-600" checked>
+                        <span class="ml-2">Tahap Domge</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="memeersCheck" class="form-checkbox h-5 w-5 text-indigo-600" checked>
+                        <span class="ml-2">Tahap Memeers</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" id="ersCheck" class="form-checkbox h-5 w-5 text-indigo-600">
+                        <span class="ml-2">Tahap Sepuh (ers)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" id="inputLabel">
+                        Teks Indonesia
+                    </label>
+                    <textarea 
+                        id="inputText" 
+                        class="w-full h-64 p-4 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Ketik teks di sini..."
+                    ></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" id="outputLabel">
+                        Hasil Terjemahan Suki
+                    </label>
+                    <textarea 
+                        id="outputText" 
+                        class="w-full h-64 p-4 border rounded-lg bg-gray-50" 
+                        readonly
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="mt-4 flex justify-end space-x-2">
+                <button id="copyBtn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    Salin Hasil
+                </button>
+                <button id="clearBtn" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                    Hapus
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Panduan Singkat</h2>
+            <ul class="list-disc pl-5 space-y-2">
+                <li>Tahap Dasar: Mengubah akhiran "nya" menjadi ".x"</li>
+                <li>Tahap Domge: Menambahkan "m" pada setiap suku kata</li>
+                <li>Tahap Memeers: Mengubah huruf b, p, f menjadi v</li>
+                <li>Tahap Sepuh: Menambahkan "ers" di akhir kata</li>
+                <li class="text-orange-600">Gunakan tombol 🔄 untuk mengubah arah terjemahan</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function translateToSuki(text, options = {}) {
+            const {
+                useDomge = true,
+                useMemeers = true,
+                useErs = false
+            } = options;
+
+            let result = text;
+
+            // Tahap 1: Selalu aktif - mengubah akhiran nya menjadi .x
+            result = result.replace(/nya\b/g, '.x');
+
+            // Tahap 2: Domge - menambahkan 'm' pada vokal
+            if (useDomge) {
+                result = result.replace(/[aiueo]/ig, 'm$&');
+            }
+
+            // Tahap 3: Memeers - mengubah b,p,f menjadi v
+            if (useMemeers) {
+                result = result.replace(/[bpf]/g, 'v');
+                result = result.replace(/[BPF]/g, 'V');
+            }
+
+            // Tahap Sepuh: Menambahkan ers di akhir kata
+            if (useErs) {
+                result = result.replace(/\b(\w+)\b/g, '$1ers');
+            }
+
+            return result;
+        }
+
+        function translateFromSuki(text, options = {}) {
+            const {
+                useDomge = true,
+                useMemeers = true,
+                useErs = false
+            } = options;
+
+            let result = text;
+
+            // Reverse Tahap Sepuh
+            if (useErs) {
+                result = result.replace(/(\w+)ers\b/g, '$1');
+            }
+
+            // Reverse Tahap Memeers
+            if (useMemeers) {
+                result = result.replace(/[vV]/g, 'b');
+            }
+
+            // Reverse Tahap Domge
+            if (useDomge) {
+                result = result.replace(/m([aiueo])/ig, '$1');
+            }
+
+            // Reverse Tahap 1
+            result = result.replace(/\.x\b/g, 'nya');
+
+            return result;
+        }
+
+        // State Management
+        let isReversed = false;
+
+        // Elements
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const domgeCheck = document.getElementById('domgeCheck');
+        const memeersCheck = document.getElementById('memeersCheck');
+        const ersCheck = document.getElementById('ersCheck');
+        const copyBtn = document.getElementById('copyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const swapBtn = document.getElementById('swapBtn');
+        const inputLabel = document.getElementById('inputLabel');
+        const outputLabel = document.getElementById('outputLabel');
+        const optionsContainer = document.getElementById('optionsContainer');
+
+        function updateTranslation() {
+            const options = {
+                useDomge: domgeCheck.checked,
+                useMemeers: memeersCheck.checked,
+                useErs: ersCheck.checked
+            };
+
+            if (isReversed) {
+                outputText.value = translateFromSuki(inputText.value, options);
+            } else {
+                outputText.value = translateToSuki(inputText.value, options);
+            }
+        }
+
+        function swapDirection() {
+            isReversed = !isReversed;
+            const tempValue = inputText.value;
+            inputText.value = outputText.value;
+            outputText.value = tempValue;
+
+            // Update labels
+            if (isReversed) {
+                inputLabel.textContent = 'Teks Bahasa Suki';
+                outputLabel.textContent = 'Hasil Terjemahan Indonesia';
+                optionsContainer.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                inputLabel.textContent = 'Teks Indonesia';
+                outputLabel.textContent = 'Hasil Terjemahan Suki';
+                optionsContainer.classList.remove('opacity-50', 'pointer-events-none');
+            }
+
+            updateTranslation();
+        }
+
+        // Event Listeners
+        inputText.addEventListener('input', updateTranslation);
+        domgeCheck.addEventListener('change', updateTranslation);
+        memeersCheck.addEventListener('change', updateTranslation);
+        ersCheck.addEventListener('change', updateTranslation);
+        swapBtn.addEventListener('click', swapDirection);
+
+        // Copy 
+        copyBtn.addEventListener('click', () => {
+            outputText.select();
+            document.execCommand('copy');
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Tersalin!';
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
+        });
+
+        // Clear
+        clearBtn.addEventListener('click', () => {
+            inputText.value = '';
+            outputText.value = '';
+            inputText.focus();
+        });
+    </script>
+</body>
+</html>
